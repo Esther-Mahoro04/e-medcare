@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-MEDICARE</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #FFF5F5; }
+        .app { max-width: 480px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 70px; }
+        .screen { display: none; padding: 20px; }
+        .screen.active { display: block; }
+        
+        .logo { text-align: center; color: #00A651; font-size: 24px; font-weight: bold; margin: 40px 0; }
+        .logo-text { color: #FF3B30; }
+        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin: 8px 0; font-size: 16px; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin: 10px 0; }
+        .btn-red { background: #FF3B30; color: white; }
+        .btn-white { background: white; border: 2px solid #FF3B30; color: #FF3B30; }
+        .link { text-align: center; margin: 15px 0; font-size: 14px; }
+        .link a { color: #FF3B30; text-decoration: none; cursor: pointer; }
+        
+        .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: white; border-top: 1px solid #ddd; display: none; padding: 10px 0; }
+        .bottom-nav.show { display: flex; justify-content: space-around; }
+        .nav-item { text-align: center; flex: 1; padding: 5px; cursor: pointer; font-size: 12px; }
+        .nav-item.active { color: #FF3B30; }
+        
+        .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .action-card { background: #FFF5F5; padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; border: 2px solid transparent; }
+        .action-card:hover { border-color: #FF3B30; }
+        .action-icon { font-size: 40px; margin-bottom: 10px; }
+        
+        .choice-card { background: white; border: 2px solid #ddd; border-radius: 12px; padding: 20px; margin: 15px 0; text-align: center; cursor: pointer; }
+        .choice-card:hover { border-color: #FF3B30; }
+        
+        .medicine-item { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin: 10px 0; cursor: pointer; }
+        .medicine-item.selected { border-color: #FF3B30; background: #FFF5F5; }
+        
+        .map-placeholder { width: 100%; height: 200px; background: #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666; margin: 15px 0; }
+        
+        .loading { text-align: center; padding: 20px; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <!-- 1. Splash Screen -->
+    <div id="splash" class="screen active">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh;">
+            <div class="logo">
+                <div style="font-size: 18px; color: #00A651; letter-spacing: 2px; margin-bottom: 10px;">TRUSTED ACCESS TO HEALTH CARE</div>
+                <div class="logo-text" style="font-size: 32px;">e-MEDICARE</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Sign Up -->
+    <div id="signup" class="screen">
+        <div class="logo"><span class="logo-text">e-MEDICARE</span></div>
+        <div style="text-align: center; margin: 10px 0;">
+            <button type="button" onclick="changeLang('en')" style="padding: 8px 15px; margin: 0 5px; border: 2px solid #FF3B30; background: white; color: #FF3B30; border-radius: 5px; cursor: pointer; font-weight: bold;" id="btn-en">EN</button>
+            <button type="button" onclick="changeLang('fr')" style="padding: 8px 15px; margin: 0 5px; border: 2px solid #ddd; background: white; color: #666; border-radius: 5px; cursor: pointer;" id="btn-fr">FR</button>
+            <button type="button" onclick="changeLang('rw')" style="padding: 8px 15px; margin: 0 5px; border: 2px solid #ddd; background: white; color: #666; border-radius: 5px; cursor: pointer;" id="btn-rw">RW</button>
+        </div>
+        <h2 style="margin-bottom: 20px;" data-translate="signup-title">Sign Up</h2>
+        <input type="text" id="signup-name" data-translate-placeholder="full-name-placeholder" placeholder="Full Name">
+        <input type="tel" id="signup-phone" data-translate-placeholder="phone-placeholder" placeholder="Phone Number">
+        <input type="email" id="signup-email" data-translate-placeholder="email-placeholder" placeholder="Email Address">
+        <input type="password" id="signup-password" data-translate-placeholder="password-placeholder" placeholder="Password">
+        <button class="btn btn-red" onclick="handleSignup()" data-translate="signup-btn">Sign Up</button>
+        <div class="link"><span data-translate="already-account">Already have an account?</span> <a onclick="showScreen('login')" data-translate="login-link">Log In</a></div>
+    </div>
+
+    <!-- 3. Login -->
+    <div id="login" class="screen">
+        <div class="logo"><span class="logo-text">e-MEDICARE</span></div>
+        <div style="text-align: center; margin: 10px 0;">
+            <button type="button" onclick="changeLang('en')" style="padding: 8px 15px; margin: 0 5px; border: 2px solid #FF3B30; background: white; color: #FF3B30; border-radius: 5px; cursor: pointer; font-weight: bold;" id="btn-en-login">EN</button>
+            <button type="button" onclick="changeLang('fr')" style="padding: 8px 15px; margin: 0 5px; border: 2px solid #ddd; background: white; color: #666; border-radius: 5px; cursor: pointer;" id="btn-fr-login">FR</button>
+            <button type="button" onclick="changeLang('rw')" style="padding: 8px 15px; margin: 0 5px; border: 2px solid #ddd; background: white; color: #666; border-radius: 5px; cursor: pointer;" id="btn-rw-login">RW</button>
+        </div>
+        
+        <h2 style="margin-bottom: 20px;" data-translate="login-title">Welcome Back</h2>
+        <input type="tel" id="login-phone" data-translate-placeholder="login-phone-placeholder" placeholder="Enter your phone number">
+        <input type="password" id="login-password" data-translate-placeholder="login-password-placeholder" placeholder="Enter your password">
+        <button class="btn btn-red" onclick="handleLogin()" data-translate="login-btn">Log In</button>
+        <div class="link"><a href="#" data-translate="forgot-password">Forgot Password?</a></div>
+        <div class="link"><span data-translate="no-account">Don't have an account yet?</span> <a onclick="showScreen('signup')" data-translate="register-link">Register now</a></div>
+    </div>
+
+    <!-- 4. Home Dashboard -->
+<div id="home" class="screen">
+    <h2 style="margin-bottom: 10px;">
+        <span data-translate="welcome">Welcome</span> 
+        <span id="user-name"></span>
+    </h2>
+    <p style="color: #666; margin-bottom: 30px;" data-translate="what-to-do">What would you like to do?</p>
+    
+    <h3 style="margin-bottom: 15px;" data-translate="quick-actions">Quick Actions</h3>
+    <div class="quick-actions">
+        <div class="action-card" onclick="showScreen('order-choice')">
+            <div class="action-icon">💊</div>
+            <div data-translate="order-medicine">Order Medicine</div>
+        </div>
+        <div class="action-card" onclick="viewMyOrders()">
+            <div class="action-icon">📋</div>
+            <div data-translate="my-orders">My Orders</div>
+        </div>
+        <div class="action-card" onclick="loadPharmacies()">
+            <div class="action-icon">📍</div>
+            <div data-translate="find-pharmacy">Find Pharmacy</div>
+        </div>
+        <div class="action-card" onclick="showScreen('track')">
+            <div class="action-icon">🚚</div>
+            <div data-translate="track-delivery">Track Delivery</div>
+        </div>
+    </div>
+</div>
+
+    <!-- 5. Order Choice -->
+    <div id="order-choice" class="screen">
+        <h2 style="margin-bottom: 20px;" data-translate="how-order">How would you like to order?</h2>
+        
+        <div class="choice-card" onclick="showScreen('snap')">
+            <div style="font-size: 50px; margin-bottom: 10px;">📸</div>
+            <h3 data-translate="snap-prescription">Snap Prescription</h3>
+            <p style="color: #666; margin-top: 10px;" data-translate="snap-desc">Take a photo of your prescription</p>
+        </div>
+        
+        <div class="choice-card" onclick="showScreen('fill-form')">
+            <div style="font-size: 50px; margin-bottom: 10px;">✏️</div>
+            <h3 data-translate="fill-info">Fill Information</h3>
+            <p style="color: #666; margin-top: 10px;" data-translate="fill-desc">Enter medicine details manually</p>
+        </div>
+        
+        <button class="btn btn-white" onclick="showScreen('home')" data-translate="back-btn">Back</button>
+    </div>
+    
+
+    <!-- 6. Snap Prescription - UPDATED WITH WORKING CAMERA -->
+    <div id="snap" class="screen">
+        <h2 style="margin-bottom: 20px;" data-translate="snap-title">Snap Prescription</h2>
+        
+        <div style="position: relative; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 15px;">
+            <video id="cameraFeed" autoplay playsinline style="width: 100%; display: none;"></video>
+            <img id="preview" style="width: 100%; display: none; border-radius: 12px;">
+            <div id="cameraPlaceholder" style="padding: 60px 20px; text-align: center; background: #f9f9f9; cursor: pointer;" onclick="startCamera()">
+                <div style="font-size: 60px; margin-bottom: 15px;">📷</div>
+                <p data-translate="tap-camera">Tap to open camera</p>
+                <p style="color: #666; font-size: 14px; margin-top: 10px;" data-translate="camera-desc">Make sure prescription is clear and readable</p>
+            </div>
+        </div>
+        
+        <canvas id="canvas" style="display: none;"></canvas>
+        
+        <div id="cameraControls" style="display: none;">
+            <button class="btn btn-red" onclick="captureImage()" data-translate="capture-btn">Capture Photo</button>
+        </div>
+        
+        <div id="uploadControls" style="display: none;">
+            <button class="btn btn-red" onclick="uploadPrescriptionImage()" data-translate="continue-photo">Continue with Photo</button>
+            <button class="btn btn-white" onclick="retakePhoto()" data-translate="retake-btn">Retake Photo</button>
+        </div>
+        
+        <button id="skipCamera" class="btn btn-white" onclick="showScreen('order-choice')" data-translate="back-btn">Back</button>
+    </div>
+
+    <!-- 7. Fill Form -->
+    <div id="fill-form" class="screen">
+        <h2 style="margin-bottom: 20px;" data-translate="medicine-info">Medicine Information</h2>
+        <label data-translate="medicine-name-label">Medicine Name</label>
+        <input type="text" id="medicine-name" data-translate-placeholder="medicine-example" placeholder="e.g., Paracetamol">
+        <label data-translate="dosage-label">Dosage</label>
+        <input type="text" id="dosage" data-translate-placeholder="dosage-example" placeholder="e.g., 500mg">
+        <label data-translate="quantity-label">Quantity</label>
+        <input type="number" id="quantity" data-translate-placeholder="quantity-example" placeholder="e.g., 20" value="1">
+        <label data-translate="notes-label">Notes (Optional)</label>
+        <textarea id="notes" data-translate-placeholder="notes-example" placeholder="Any special instructions..."></textarea>
+        <button class="btn btn-red" onclick="savePrescription()" data-translate="continue-btn">Continue</button>
+        <button class="btn btn-white" onclick="showScreen('order-choice')" data-translate="back-btn">Back</button>
+    </div>
+
+    <!-- 8. Medicine Details -->
+    <div id="medicine-details" class="screen">
+        <h2 style="margin-bottom: 20px;" data-translate="verify-details">Verify Medicine Details</h2>
+        <div style="background: #f9f9f9; padding: 20px; border-radius: 12px; margin: 20px 0;">
+            <h3 style="margin-bottom: 15px;" data-translate="medicine-details-title">Medicine Details</h3>
+            <p><strong data-translate="medicine-label">Medicine:</strong> <span id="detail-medicine"></span></p>
+            <p><strong data-translate="dosage-label">Dosage:</strong> <span id="detail-dosage"></span></p>
+            <p><strong data-translate="quantity-label">Quantity:</strong> <span id="detail-quantity"></span></p>
+        </div>
+        <button class="btn btn-red" onclick="loadPharmacies()" data-translate="looks-good">Looks Good - Find Pharmacy</button>
+        <button class="btn btn-white" onclick="showScreen('fill-form')" data-translate="edit-btn">Edit</button>
+    </div>
+
+    <!-- 9. Select Pharmacy -->
+    <div id="select-pharmacy" class="screen">
+        <h2 style="margin-bottom: 20px;" data-translate="select-pharmacy-title">Select a Pharmacy</h2>
+        
+        <!-- REAL GOOGLE MAP -->
+        <iframe 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63734.52589219441!2d30.03862047910156!3d-1.9440727000000002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca4258ed8e797%3A0xe0!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2s!4v1234567890123!5m2!1sen!2s" 
+            width="100%" 
+            height="250" 
+            style="border:0; border-radius: 8px; margin: 15px 0;" 
+            allowfullscreen="" 
+            loading="lazy">
+        </iframe>
+        
+        <!-- DROPDOWN FILTER -->
+        <label style="font-weight: bold; margin-top: 15px; display: block;">
+            <span data-translate="filter-by-distance">Filter by Distance</span>
+        </label>
+        <select id="distance-filter" onchange="filterPharmacies()" style="margin-bottom: 15px;">
+            <option value="all" data-translate="all-pharmacies">All Pharmacies</option>
+            <option value="2">Within 2 km</option>
+            <option value="5">Within 5 km</option>
+            <option value="10">Within 10 km</option>
+        </select>
+        
+        <h3 style="margin: 20px 0 10px;" data-translate="nearby-pharmacies">Nearby Pharmacies</h3>
+        <div id="pharmacy-list" class="loading" data-translate="loading-pharmacies">Loading pharmacies...</div>
+        
+        <button class="btn btn-red" onclick="proceedToConfirm()" data-translate="continue-btn">Continue</button>
+        <button class="btn btn-white" onclick="showScreen('medicine-details')" data-translate="back-btn">Back</button>
+    </div>
+
+    <!-- 10. Confirm Order -->
+    <div id="confirm-order" class="screen">
+        <h2 style="margin-bottom: 20px;" data-translate="confirm-order-title">Confirm Order</h2>
+        
+        <div style="background: #f9f9f9; padding: 20px; border-radius: 12px; margin: 20px 0;">
+            <h3 style="margin-bottom: 15px;" data-translate="order-summary">Order Summary</h3>
+            <p><strong data-translate="medicine-label">Medicine:</strong> <span id="order-medicine"></span></p>
+            <p><strong data-translate="quantity-label">Quantity:</strong> <span id="order-quantity"></span></p>
+            <p><strong data-translate="pharmacy-label">Pharmacy:</strong> <span id="order-pharmacy"></span></p>
+            <p><strong data-translate="price-label">Price:</strong> <span id="order-price"></span> RWF</p>
+        </div>
+        
+        <label data-translate="payment-method-label">Payment Method</label>
+        <select id="payment">
+            <option data-translate="mtn-momo">MTN Mobile Money</option>
+            <option data-translate="airtel-money">Airtel Money</option>
+            <option data-translate="cash-delivery">Cash on Delivery</option>
+            <option data-translate="card-payment">Card Payment</option>
+        </select>
+        
+        <label data-translate="delivery-address-label">Delivery Address</label>
+        <textarea id="address" data-translate-placeholder="address-example" placeholder="Enter your delivery address..."></textarea>
+        
+        <button class="btn btn-red" onclick="placeOrder()" data-translate="confirm-order-btn">Confirm Order</button>
+        <button class="btn btn-white" onclick="showScreen('select-pharmacy')" data-translate="back-btn">Back</button>
+    </div>
+
+    <!-- 11. Track Delivery -->
+    <div id="track" class="screen">
+        <h2 style="margin-bottom: 20px;" data-translate="track-order-title">Track Your Order</h2>
+        
+        <div style="background: #f0f9f4; border: 2px solid #00A651; padding: 20px; border-radius: 12px; margin: 20px 0;">
+            <p style="color: #00A651; font-weight: bold; font-size: 18px;" data-translate="order-confirmed">Order Confirmed</p>
+        </div>
+        
+        <div style="background: #f9f9f9; padding: 20px; border-radius: 12px;">
+            <h3 style="margin-bottom: 15px;" data-translate="order-status">Order Status</h3>
+            <p style="margin: 10px 0;" data-translate="order-placed">✓ Order placed</p>
+            <p style="margin: 10px 0;" data-translate="pharmacy-preparing">✓ Pharmacy preparing</p>
+            <p style="margin: 10px 0;" data-translate="driver-assigned">→ Driver assigned</p>
+            <p style="margin: 10px 0; color: #666;" data-translate="out-delivery">○ Out for delivery</p>
+            <p style="margin: 10px 0; color: #666;" data-translate="delivered">○ Delivered</p>
+        </div>
+        
+        <div style="background: #FFF5F5; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
+            <p style="color: #666;" data-translate="estimated-time">Estimated Delivery Time</p>
+            <p style="font-size: 24px; font-weight: bold; color: #FF3B30; margin-top: 5px;">30 minutes</p>
+        </div>
+        
+        <button class="btn btn-red" onclick="showScreen('home')" data-translate="done-btn">Done</button>
+    </div>
+
+    <!-- 12. My Orders Screen -->
+    <div id="my-orders" class="screen">
+        <h2 style="margin-bottom: 20px;" data-translate="my-orders-title">My Orders</h2>
+        <div id="orders-list" class="loading" data-translate="loading-orders">Loading your orders...</div>
+        <button class="btn btn-white" onclick="showScreen('home')" data-translate="back-home">Back to Home</button>
+    </div>
+
+<!-- Bottom Navigation -->
+<div class="bottom-nav" id="bottom-nav">
+    <div class="nav-item active" onclick="showScreen('home')">
+        <div style="font-size: 20px;">🏠</div>
+        <div data-translate="home-nav">Home</div>
+    </div>
+    <div class="nav-item" onclick="showScreen('order-choice')">
+        <div style="font-size: 20px;">💊</div>
+        <div data-translate="order-nav">Order</div>
+    </div>
+    <div class="nav-item" onclick="viewMyOrders()">
+        <div style="font-size: 20px;">📦</div>
+        <div data-translate="orders-nav">Orders</div>
+    </div>
+    <div class="nav-item" onclick="logout()">
+        <div style="font-size: 20px;">👤</div>
+        <div data-translate="logout-nav">Logout</div>
+    </div>
+</div>
+
+<script>
+    let currentUser = null;
+    let currentPrescription = {};
+    let selectedPharmacy = null;
+    let currentLang = 'en';
+
+    // TRANSLATIONS OBJECT
+    const translations = {
+        en: {
+         
+            'signup-title': 'Sign Up',
+        'login-title': 'Welcome Back',
+        'full-name-placeholder': 'Full Name',
+        'phone-placeholder': 'Phone Number',
+        'email-placeholder': 'Email Address',
+        'password-placeholder': 'Password',
+        'login-phone-placeholder': 'Enter your phone number',
+        'login-password-placeholder': 'Enter your password',
+        'signup-btn': 'Sign Up',
+        'login-btn': 'Log In',
+        'already-account': 'Already have an account?',
+        'login-link': 'Log In',
+        'forgot-password': 'Forgot Password?',
+        'no-account': 'Don\'t have an account yet?',
+        'register-link': 'Register now',
+            'signup-title': 'Sign Up',
+            'login-title': 'Welcome Back',
+            'welcome': 'Welcome',
+            'what-to-do': 'What would you like to do?',
+            'quick-actions': 'Quick Actions',
+            'order-medicine': 'Order Medicine',
+            'my-orders': 'My Orders',
+            'find-pharmacy': 'Find Pharmacy',
+            'track-delivery': 'Track Delivery',
+            'how-order': 'How would you like to order?',
+            'snap-prescription': 'Snap Prescription',
+            'snap-desc': 'Take a photo of your prescription',
+            'fill-info': 'Fill Information',
+            'fill-desc': 'Enter medicine details manually',
+            'back-btn': 'Back',
+            'snap-title': 'Snap Prescription',
+            'tap-camera': 'Tap to open camera',
+            'camera-desc': 'Make sure prescription is clear and readable',
+            'capture-btn': 'Capture Photo',
+            'continue-photo': 'Continue with Photo',
+            'retake-btn': 'Retake Photo',
+            'medicine-info': 'Medicine Information',
+            'medicine-name-label': 'Medicine Name',
+            'medicine-example': 'e.g., Paracetamol',
+            'dosage-label': 'Dosage',
+            'dosage-example': 'e.g., 500mg',
+            'quantity-label': 'Quantity',
+            'quantity-example': 'e.g., 20',
+            'notes-label': 'Notes (Optional)',
+            'notes-example': 'Any special instructions...',
+            'continue-btn': 'Continue',
+            'verify-details': 'Verify Medicine Details',
+            'medicine-details-title': 'Medicine Details',
+            'medicine-label': 'Medicine',
+            'looks-good': 'Looks Good - Find Pharmacy',
+            'edit-btn': 'Edit',
+            'select-pharmacy-title': 'Select a Pharmacy',
+            'map-view': 'Map View (GPS Integration)',
+            'nearby-pharmacies': 'Nearby Pharmacies',
+            'loading-pharmacies': 'Loading pharmacies...',
+            'confirm-order-title': 'Confirm Order',
+            'order-summary': 'Order Summary',
+            'pharmacy-label': 'Pharmacy',
+            'price-label': 'Price',
+            'payment-method-label': 'Payment Method',
+            'mtn-momo': 'MTN Mobile Money',
+            'airtel-money': 'Airtel Money',
+            'cash-delivery': 'Cash on Delivery',
+            'card-payment': 'Card Payment',
+            'delivery-address-label': 'Delivery Address',
+            'address-example': 'Enter your delivery address...',
+            'confirm-order-btn': 'Confirm Order',
+            'track-order-title': 'Track Your Order',
+            'order-confirmed': 'Order Confirmed',
+            'order-status': 'Order Status',
+            'order-placed': '✓ Order placed',
+            'pharmacy-preparing': '✓ Pharmacy preparing',
+            'driver-assigned': '→ Driver assigned',
+            'out-delivery': '○ Out for delivery',
+            'delivered': '○ Delivered',
+            'estimated-time': 'Estimated Delivery Time',
+            'done-btn': 'Done',
+            'my-orders-title': 'My Orders',
+            'loading-orders': 'Loading your orders...',
+            'back-home': 'Back to Home',
+            'home-nav': 'Home',
+            'order-nav': 'Order',
+            'orders-nav': 'Orders',
+            'logout-nav': 'Logout',
+            'filter-by-distance': 'Filter by Distance',
+            'all-pharmacies': 'All Pharmacies',
+        },
+        fr: {
+            'signup-title': 'S\'inscrire',
+            'login-title': 'Bienvenue',
+            'welcome': 'Bienvenue',
+            'what-to-do': 'Que souhaitez-vous faire?',
+            'quick-actions': 'Actions Rapides',
+            'order-medicine': 'Commander Médicament',
+            'my-orders': 'Mes Commandes',
+            'find-pharmacy': 'Trouver Pharmacie',
+            'track-delivery': 'Suivre Livraison',
+            'how-order': 'Comment voulez-vous commander?',
+            'snap-prescription': 'Photo Ordonnance',
+            'snap-desc': 'Prenez une photo de votre ordonnance',
+            'fill-info': 'Remplir Formulaire',
+            'fill-desc': 'Entrez les détails manuellement',
+            'back-btn': 'Retour',
+            'snap-title': 'Photo Ordonnance',
+            'tap-camera': 'Appuyez pour ouvrir la caméra',
+            'camera-desc': 'Assurez-vous que l\'ordonnance est claire',
+            'capture-btn': 'Capturer Photo',
+            'continue-photo': 'Continuer avec Photo',
+            'retake-btn': 'Reprendre Photo',
+            'medicine-info': 'Informations Médicament',
+            'medicine-name-label': 'Nom du Médicament',
+            'medicine-example': 'ex., Paracétamol',
+            'dosage-label': 'Dosage',
+            'dosage-example': 'ex., 500mg',
+            'quantity-label': 'Quantité',
+            'quantity-example': 'ex., 20',
+            'notes-label': 'Notes (Optionnel)',
+            'notes-example': 'Instructions spéciales...',
+            'continue-btn': 'Continuer',
+            'verify-details': 'Vérifier les Détails',
+            'medicine-details-title': 'Détails du Médicament',
+            'medicine-label': 'Médicament',
+            'looks-good': 'C\'est Bon - Trouver Pharmacie',
+            'edit-btn': 'Modifier',
+            'select-pharmacy-title': 'Sélectionner une Pharmacie',
+            'map-view': 'Vue Carte (Intégration GPS)',
+            'nearby-pharmacies': 'Pharmacies à Proximité',
+            'loading-pharmacies': 'Chargement des pharmacies...',
+            'confirm-order-title': 'Confirmer la Commande',
+            'order-summary': 'Résumé de la Commande',
+            'pharmacy-label': 'Pharmacie',
+            'price-label': 'Prix',
+            'payment-method-label': 'Méthode de Paiement',
+            'mtn-momo': 'MTN Mobile Money',
+            'airtel-money': 'Airtel Money',
+            'cash-delivery': 'Paiement à la Livraison',
+            'card-payment': 'Paiement par Carte',
+            'delivery-address-label': 'Adresse de Livraison',
+            'address-example': 'Entrez votre adresse de livraison...',
+            'confirm-order-btn': 'Confirmer la Commande',
+            'track-order-title': 'Suivre Votre Commande',
+            'order-confirmed': 'Commande Confirmée',
+            'order-status': 'État de la Commande',
+            'order-placed': '✓ Commande passée',
+            'pharmacy-preparing': '✓ Pharmacie en préparation',
+            'driver-assigned': '→ Chauffeur assigné',
+            'out-delivery': '○ En cours de livraison',
+            'delivered': '○ Livré',
+            'estimated-time': 'Temps de Livraison Estimé',
+            'done-btn': 'Terminé',
+            'my-orders-title': 'Mes Commandes',
+            'loading-orders': 'Chargement de vos commandes...',
+            'back-home': 'Retour à l\'Accueil',
+            'home-nav': 'Accueil',
+            'order-nav': 'Commander',
+            'orders-nav': 'Commandes',
+            'logout-nav': 'Déconnexion',
+            'signup-title': 'S\'inscrire',
+        'login-title': 'Bienvenue',
+        'full-name-placeholder': 'Nom Complet',
+        'phone-placeholder': 'Numéro de Téléphone',
+        'email-placeholder': 'Adresse Email',
+        'password-placeholder': 'Mot de Passe',
+        'login-phone-placeholder': 'Entrez votre numéro de téléphone',
+        'login-password-placeholder': 'Entrez votre mot de passe',
+        'signup-btn': 'S\'inscrire',
+        'login-btn': 'Se Connecter',
+        'already-account': 'Vous avez déjà un compte?',
+        'login-link': 'Se Connecter',
+        'forgot-password': 'Mot de passe oublié?',
+        'no-account': 'Vous n\'avez pas de compte?',
+        'register-link': 'S\'inscrire maintenant',
+        'filter-by-distance': 'Filtrer par Distance',
+        'all-pharmacies': 'Toutes les Pharmacies',
+        },
+        rw: {
+            'signup-title': 'Iyandikishe',
+            'login-title': 'Murakaza Neza',
+            'welcome': 'Murakaza Neza',
+            'what-to-do': 'Ushaka gukora iki?',
+            'quick-actions': 'Ibikorwa Byihuse',
+            'order-medicine': 'Gutumiza Imiti',
+            'my-orders': 'Ibyo Natumije',
+            'find-pharmacy': 'Shakisha Farumasi',
+            'track-delivery': 'Kurikirana Ibyo Woherejwe',
+            'how-order': 'Wifuza gutumiza gute?',
+            'snap-prescription': 'Fata Ifoto y\'Imiti',
+            'snap-desc': 'Fata ifoto y\'imiti yawe',
+            'fill-info': 'Uzuza Amakuru',
+            'fill-desc': 'Injiza amakuru y\'imiti wenyine',
+            'back-btn': 'Gusubira Inyuma',
+            'snap-title': 'Fata Ifoto y\'Imiti',
+            'tap-camera': 'Kanda kugirango ufungure kamera',
+            'camera-desc': 'Menya ko ifoto igaragara neza',
+            'capture-btn': 'Fata Ifoto',
+            'continue-photo': 'Komeza na Iyi foto',
+            'retake-btn': 'Ongera Ufate',
+            'medicine-info': 'Amakuru y\'Imiti',
+            'medicine-name-label': 'Izina ry\'Umuti',
+            'medicine-example': 'urugero., Paracetamol',
+            'dosage-label': 'Ingano',
+            'dosage-example': 'urugero., 500mg',
+            'quantity-label': 'Umubare',
+            'quantity-example': 'urugero., 20',
+            'notes-label': 'Inyongera (Bitegetswe)',
+            'notes-example': 'Amabwiriza yihariye...',
+            'continue-btn': 'Komeza',
+            'verify-details': 'Kugenzura Amakuru',
+            'medicine-details-title': 'Amakuru y\'Umuti',
+            'medicine-label': 'Umuti',
+            'looks-good': 'Ni Byiza - Shakisha Farumasi',
+            'edit-btn': 'Hindura',
+            'select-pharmacy-title': 'Hitamo Farumasi',
+            'map-view': 'Ikarita (GPS)',
+            'nearby-pharmacies': 'Farumasi Ziri Hafi',
+            'loading-pharmacies': 'Gupakira farumasi...',
+            'confirm-order-title': 'Emeza Gutumiza',
+            'order-summary': 'Incamake',
+            'pharmacy-label': 'Farumasi',
+            'price-label': 'Igiciro',
+            'payment-method-label': 'Uburyo bwo Kwishyura',
+            'mtn-momo': 'MTN Mobile Money',
+            'airtel-money': 'Airtel Money',
+            'cash-delivery': 'Kwishyura Iyo Ubyakira',
+            'card-payment': 'Kwishyura na Karita',
+            'delivery-address-label': 'Aho Utuye',
+            'address-example': 'Injiza aho utuye...',
+            'confirm-order-btn': 'Emeza Gutumiza',
+            'track-order-title': 'Kurikirana Ibyo Watumije',
+            'order-confirmed': 'Byemejwe',
+            'order-status': 'Uko Bimeze',
+            'order-placed': '✓ Byatumijwe',
+            'pharmacy-preparing': '✓ Farumasi iratunganya',
+            'driver-assigned': '→ Umushoferi yahabwe',
+            'out-delivery': '○ Biri munzira',
+            'delivered': '○ Byakiriwe',
+            'estimated-time': 'Igihe Byagera',
+            'done-btn': 'Byarangiye',
+            'my-orders-title': 'Ibyo Natumije',
+            'loading-orders': 'Gupakira ibyo watumije...',
+            'back-home': 'Gusubira Ahabanza',
+            'home-nav': 'Ahabanza',
+            'order-nav': 'Tumiza',
+            'orders-nav': 'Ibyo Natumije',
+            'logout-nav': 'Gusohoka',
+            'signup-title': 'Iyandikishe',
+        'login-title': 'Murakaza Neza',
+        'full-name-placeholder': 'Amazina Yose',
+        'phone-placeholder': 'Nimero ya Telephone',
+        'email-placeholder': 'Aderesi ya Email',
+        'password-placeholder': 'Ijambo Ryibanga',
+        'login-phone-placeholder': 'Injiza nimero ya telephone',
+        'login-password-placeholder': 'Injiza ijambo ryibanga',
+        'signup-btn': 'Iyandikishe',
+        'login-btn': 'Injira',
+        'already-account': 'Usanzwe ufite konti?',
+        'login-link': 'Injira',
+        'forgot-password': 'Wibagiwe ijambo ryibanga?',
+        'no-account': 'Nta konti ufite?',
+        'register-link': 'Iyandikishe ubu',
+        'filter-by-distance': 'Hitamo Intera',
+        'all-pharmacies': 'Farumasi Zose',
+        }
+    };
+
+    // LANGUAGE CHANGE FUNCTION
+    function changeLang(lang) {
+        currentLang = lang;
+        
+        // Update button styles
+        document.getElementById('btn-en').style.borderColor = lang === 'en' ? '#FF3B30' : '#ddd';
+        document.getElementById('btn-en').style.color = lang === 'en' ? '#FF3B30' : '#666';
+        document.getElementById('btn-fr').style.borderColor = lang === 'fr' ? '#FF3B30' : '#ddd';
+        document.getElementById('btn-fr').style.color = lang === 'fr' ? '#FF3B30' : '#666';
+        document.getElementById('btn-rw').style.borderColor = lang === 'rw' ? '#FF3B30' : '#ddd';
+        document.getElementById('btn-rw').style.color = lang === 'rw' ? '#FF3B30' : '#666';
+        
+        // Update all text elements
+        document.querySelectorAll('[data-translate]').forEach(element => {
+            const key = element.getAttribute('data-translate');
+            if (translations[lang] && translations[lang][key]) {
+                element.textContent = translations[lang][key];
+            }
+        });
+        
+        // Update all placeholders
+        document.querySelectorAll('[data-translate-placeholder]').forEach(element => {
+            const key = element.getAttribute('data-translate-placeholder');
+            if (translations[lang] && translations[lang][key]) {
+                element.placeholder = translations[lang][key];
+            }
+        });
+    }
+
+    // CAMERA FUNCTIONALITY
+    let stream = null;
+    let capturedBlob = null;
+
+    function startCamera() {
+        const cameraFeed = document.getElementById('cameraFeed');
+        const placeholder = document.getElementById('cameraPlaceholder');
+        const controls = document.getElementById('cameraControls');
+        
+        navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: { ideal: "environment" },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            } 
+        })
+        .then(s => {
+            stream = s;
+            cameraFeed.srcObject = stream;
+            cameraFeed.style.display = 'block';
+            placeholder.style.display = 'none';
+            controls.style.display = 'block';
+            document.getElementById('skipCamera').style.display = 'none';
+        })
+        .catch(error => {
+            alert('Cannot access camera. Please check permissions or try "Fill Information" instead.');
+            console.error('Camera error:', error);
+        });
+    }
+
+    function captureImage() {
+        const cameraFeed = document.getElementById('cameraFeed');
+        const preview = document.getElementById('preview');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = cameraFeed.videoWidth;
+        canvas.height = cameraFeed.videoHeight;
+        ctx.drawImage(cameraFeed, 0, 0);
+        
+        canvas.toBlob((blob) => {
+            capturedBlob = blob;
+            preview.src = URL.createObjectURL(blob);
+            preview.style.display = 'block';
+            cameraFeed.style.display = 'none';
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            document.getElementById('cameraControls').style.display = 'none';
+            document.getElementById('uploadControls').style.display = 'block';
+        }, 'image/jpeg', 0.95);
+    }
+
+    function retakePhoto() {
+        document.getElementById('preview').style.display = 'none';
+        document.getElementById('cameraPlaceholder').style.display = 'block';
+        document.getElementById('uploadControls').style.display = 'none';
+        document.getElementById('skipCamera').style.display = 'block';
+        capturedBlob = null;
+    }
+
+    function uploadPrescriptionImage() {
+        if (!capturedBlob) {
+            alert('No image captured');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('prescription', capturedBlob, 'prescription.jpg');
+        formData.append('user_id', currentUser ? currentUser.id : 0);
+        
+        fetch('prescription_save.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Prescription photo saved! Now enter medicine details.');
+                showScreen('fill-form');
+            } else {
+                alert('Upload failed: ' + data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Connection error. Photo will be saved locally.');
+            showScreen('fill-form');
+        });
+    }
+
+    // Show splash then go to signup
+    setTimeout(() => {
+        showScreen('signup');
+    }, 2000);
+
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        
+        const nav = document.getElementById('bottom-nav');
+        if (['home', 'order-choice', 'my-orders'].includes(screenId)) {
+            nav.classList.add('show');
+        } else {
+            nav.classList.remove('show');
+        }
+    }
+
+    function handleSignup() {
+        const name = document.getElementById('signup-name').value;
+        const phone = document.getElementById('signup-phone').value;
+        const email = document.getElementById('signup-email').value;
+        const password = document.getElementById('signup-password').value;
+
+        if (!name || !phone || !email || !password) {
+            alert('Please fill all fields');
+            return;
+        }
+
+        fetch('register.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, phone, email, password })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Registration successful! Please login.');
+                showScreen('login');
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(err => alert('Connection error: ' + err));
+    }
+
+    function handleLogin() { 
+        const phone = document.getElementById('login-phone').value; 
+        const password = document.getElementById('login-password').value; 
+        
+        if (!phone || !password) { 
+            alert('Please enter phone and password'); 
+            return; 
+        }
+
+        fetch('login.php', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ phone, password }) 
+        }) 
+        .then(res => res.json()) 
+        .then(data => { 
+            if (data.success) { 
+                currentUser = data.user; 
+                document.getElementById('user-name').textContent = data.user.name; 
+                showScreen('home'); 
+            } else { 
+                alert(data.message); 
+            } 
+        }) 
+        .catch(err => alert('Connection error: ' + err)); 
+    }
+
+    function savePrescription() {
+        const medicine = document.getElementById('medicine-name').value;
+        const dosage = document.getElementById('dosage').value;
+        const quantity = document.getElementById('quantity').value;
+
+        if (!medicine || !quantity) {
+            alert('Please enter medicine name and quantity');
+            return;
+        }
+
+        currentPrescription = {
+            medicine: medicine,
+            dosage: dosage || 'N/A',
+            quantity: quantity
+        };
+
+        document.getElementById('detail-medicine').textContent = medicine;
+        document.getElementById('detail-dosage').textContent = dosage || 'N/A';
+        document.getElementById('detail-quantity').textContent = quantity;
+        showScreen('medicine-details');
+    }
+
+    function loadPharmacies() {
+        showScreen('select-pharmacy');
+        
+        fetch('get_pharmacies.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const list = document.getElementById('pharmacy-list');
+                list.innerHTML = '';
+                
+                data.pharmacies.forEach(pharmacy => {
+                    const item = document.createElement('div');
+                    item.className = 'medicine-item';
+                    item.onclick = () => selectPharmacy(item, pharmacy);
+                    item.innerHTML = `
+                        <h4>${pharmacy.name}</h4>
+                        <p style="color: #666; font-size: 14px;">${pharmacy.distance || '0.5'} km away</p>
+                        <p style="color: #00A651; font-size: 14px;">Open now</p>
+                    `;
+                    list.appendChild(item);
+                });
+            } else {
+                document.getElementById('pharmacy-list').innerHTML = '<p>No pharmacies found</p>';
+            }
+        })
+        .catch(err => {
+            document.getElementById('pharmacy-list').innerHTML = '<p>Error loading pharmacies</p>';
+        });
+    }
+
+    function selectPharmacy(element, pharmacy) {
+        document.querySelectorAll('.medicine-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        element.classList.add('selected');
+        selectedPharmacy = pharmacy;
+        
+        document.getElementById('order-medicine').textContent = currentPrescription.medicine + ' ' + currentPrescription.dosage;
+        document.getElementById('order-quantity').textContent = currentPrescription.quantity;
+        document.getElementById('order-pharmacy').textContent = pharmacy.name;
+        document.getElementById('order-price').textContent = '500';
+    }
+
+    function placeOrder() {
+        const address = document.getElementById('address').value;
+        const payment = document.getElementById('payment').value;
+        
+        if (!address) {
+            alert('Please enter delivery address');
+            return;
+        }
+
+        if (!currentUser) {
+            alert('Please login first');
+            return;
+        }
+
+        if (!selectedPharmacy) {
+            alert('Please select a pharmacy');
+            return;
+        }
+
+        fetch('order.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: currentUser.id,
+                medicine: currentPrescription.medicine + ' ' + currentPrescription.dosage,
+                price: 500,
+                payment_method: payment,
+                address: address
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Order placed successfully!');
+                showScreen('track');
+            } else {
+                alert('Order failed: ' + data.message);
+            }
+        })
+        .catch(err => alert('Connection error: ' + err));
+    }
+
+    function viewMyOrders() {
+        if (!currentUser) {
+            alert('Please login first');
+            return;
+        }
+
+        showScreen('my-orders');
+        
+        fetch('get_orders.php?user_id=' + currentUser.id)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.orders.length > 0) {
+                const list = document.getElementById('orders-list');
+                list.innerHTML = '';
+                
+                data.orders.forEach(order => {
+                    const item = document.createElement('div');
+                    item.className = 'medicine-item';
+                    item.innerHTML = `
+                        <h4>${order.medicine}</h4>
+                        <p><strong>Price:</strong> ${order.price} RWF</p>
+                        <p><strong>Payment:</strong> ${order.payment_method}</p>
+                        <p><strong>Status:</strong> ${order.status}</p>
+                        <p style="color: #666; font-size: 12px;">${new Date(order.created_at).toLocaleString()}</p>
+                    `;
+                    list.appendChild(item);
+                });
+            } else {
+                document.getElementById('orders-list').innerHTML = '<p>No orders yet</p>';
+            }
+        })
+        .catch(err => {
+            document.getElementById('orders-list').innerHTML = '<p>Error loading orders</p>';
+        });
+    }
+
+    function logout() {
+        currentUser = null;
+        currentPrescription = {};
+        selectedPharmacy = null;
+        showScreen('login');
+    }
+
+    // Store all pharmacies globally
+let allPharmacies = [];
+
+// LOAD PHARMACIES - UPDATED VERSION
+function loadPharmacies() {
+    showScreen('select-pharmacy');
+    
+    fetch('get_pharmacies.php')
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            allPharmacies = data.pharmacies; // Store for filtering
+            displayPharmacies(allPharmacies);
+        } else {
+            document.getElementById('pharmacy-list').innerHTML = '<p>No pharmacies found</p>';
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        // FALLBACK - Show dummy data if backend fails
+        allPharmacies = [
+            {id: 1, name: 'City Pharmacy', address: 'KN 4 Ave', distance: '0.5', status: 'Open now', phone: '+250788111111'},
+            {id: 2, name: 'Health Plus Pharmacy', address: 'KG 9 Ave', distance: '1.2', status: 'Open now', phone: '+250788222222'},
+            {id: 3, name: 'MediCare Pharmacy', address: 'KN 3 Rd', distance: '2.0', status: 'Open now', phone: '+250788333333'},
+            {id: 4, name: 'Central Pharmacy', address: 'Avenue de la Paix', distance: '2.5', status: 'Open now', phone: '+250788444444'},
+            {id: 5, name: 'Unity Pharmacy', address: 'KG 11 Ave', distance: '3.0', status: 'Open now', phone: '+250788555555'},
+            {id: 6, name: 'Remera Pharmacy', address: 'Remera', distance: '4.5', status: 'Open now', phone: '+250788666666'}
+        ];
+        displayPharmacies(allPharmacies);
+    });
+}
+
+// DISPLAY PHARMACIES IN LIST
+function displayPharmacies(pharmacies) {
+    const list = document.getElementById('pharmacy-list');
+    list.innerHTML = '';
+    
+    if (pharmacies.length === 0) {
+        list.innerHTML = '<p style="text-align:center; color:#666;">No pharmacies found within this distance</p>';
+        return;
+    }
+    
+    pharmacies.forEach(pharmacy => {
+        const item = document.createElement('div');
+        item.className = 'medicine-item';
+        item.onclick = () => selectPharmacy(item, pharmacy);
+        item.innerHTML = `
+            <h4>${pharmacy.name}</h4>
+            <p style="color: #666; font-size: 14px;">📍 ${pharmacy.address}</p>
+            <p style="color: #666; font-size: 14px;">📏 ${pharmacy.distance} km away</p>
+            <p style="color: #00A651; font-size: 14px;">✓ ${pharmacy.status}</p>
+        `;
+        list.appendChild(item);
+    });
+}
+
+// FILTER PHARMACIES BY DISTANCE
+function filterPharmacies() {
+    const maxDistance = document.getElementById('distance-filter').value;
+    
+    if (maxDistance === 'all') {
+        displayPharmacies(allPharmacies);
+    } else {
+        const filtered = allPharmacies.filter(p => parseFloat(p.distance) <= parseFloat(maxDistance));
+        displayPharmacies(filtered);
+    }
+}
+
+// PROCEED TO CONFIRM - CHECK IF PHARMACY IS SELECTED
+function proceedToConfirm() {
+    if (!selectedPharmacy) {
+        alert('Please select a pharmacy first');
+        return;
+    }
+    showScreen('confirm-order');
+}
+
+</script>
+<style>
+    /* Emergency Call Button */
+    .emergency-call-btn {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 65px;
+        height: 65px;
+        background: linear-gradient(135deg, #FF0000, #DC0000);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 25px rgba(255, 0, 0, 0.5);
+        cursor: pointer;
+        z-index: 1000;
+        animation: emergencyPulse 2s infinite;
+        border: 4px solid white;
+        text-decoration: none;
+    }
+
+    .emergency-call-btn:active {
+        transform: scale(0.9);
+    }
+
+    @keyframes emergencyPulse {
+        0%, 100% {
+            box-shadow: 0 6px 25px rgba(255, 0, 0, 0.5);
+            transform: scale(1);
+        }
+        50% {
+            box-shadow: 0 8px 35px rgba(255, 0, 0, 0.8);
+            transform: scale(1.05);
+        }
+    }
+
+    .emergency-call-btn .phone-icon {
+        font-size: 35px;
+        animation: ring 1.5s ease-in-out infinite;
+    }
+
+    @keyframes ring {
+        0%, 100% { transform: rotate(0deg); }
+        10%, 30% { transform: rotate(-15deg); }
+        20%, 40% { transform: rotate(15deg); }
+        50% { transform: rotate(0deg); }
+    }
+
+    .emergency-label {
+        position: fixed;
+        bottom: 165px;
+        right: 20px;
+        background: rgba(255, 0, 0, 0.95);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 999;
+        box-shadow: 0 4px 15px rgba(255, 0, 0, 0.4);
+        white-space: nowrap;
+        animation: fadeInOut 3s infinite;
+    }
+
+    @keyframes fadeInOut {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
+    }
+    </style>
+
+    <!-- Emergency Label -->
+    <div class="emergency-label">🚨 Emergency: 0788490000</div>
+
+    <!-- Emergency Call Button -->
+    <a href="tel:+250788490000" class="emergency-call-btn" title="Call Emergency Hotline">
+        <div class="phone-icon">📞</div>
+    </a>
+    
+</body>
+</html>
